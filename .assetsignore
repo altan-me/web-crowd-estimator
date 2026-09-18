@@ -1,0 +1,8 @@
+# Files excluded from the deployed static assets (kept in the repo only).
+wrangler.toml
+package.json
+package-lock.json
+node_modules
+.git
+.gitattributes
+.assetsignore

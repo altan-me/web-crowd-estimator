@@ -1,0 +1,7 @@
+name = "web-crowd-estimator"
+compatibility_date = "2024-09-23"
+
+# Pure static site: Wrangler serves these files directly, no Worker script needed.
+[assets]
+directory = "./"
+not_found_handling = "404-page"

@@ -1,0 +1,17 @@
+{
+  "name": "web-crowd-estimator",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Vanilla JS crowd estimator: satellite imagery + Herbert Jacobs' crowd density grid.",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  },
+  "allowScripts": {
+    "esbuild@0.28.1": true,
+    "workerd@1.20260917.1": true
+  }
+}
