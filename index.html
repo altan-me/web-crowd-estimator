@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Crowd Estimator</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="app-header">
+      <h1>Crowd Estimator</h1>
+      <form id="search-form" class="search-form" autocomplete="off">
+        <input
+          type="text"
+          id="search-input"
+          placeholder="Search a place or address..."
+        />
+        <button type="submit" id="search-btn">Go</button>
+      </form>
+    </header>
+
+    <main class="app-main">
+      <div class="map-wrap">
+        <canvas id="map-canvas"></canvas>
+        <div class="map-controls">
+          <button type="button" id="zoom-in" title="Zoom in">+</button>
+          <button type="button" id="zoom-out" title="Zoom out">&minus;</button>
+        </div>
+        <div id="hint" class="hint"></div>
+      </div>
+
+      <aside class="panel">
+        <section class="panel-section">
+          <h2>Mode</h2>
+          <div class="btn-group" id="mode-group">
+            <button type="button" class="mode-btn active" data-mode="pan">
+              Pan / Zoom
+            </button>
+            <button type="button" class="mode-btn" data-mode="draw">
+              Draw Polygon
+            </button>
+            <button type="button" class="mode-btn" data-mode="paint">
+              Paint Grid
+            </button>
+          </div>
+        </section>
+
+        <section class="panel-section" id="draw-section">
+          <h2>Polygon</h2>
+          <div class="btn-row">
+            <button type="button" id="undo-point">Undo Point</button>
+            <button type="button" id="finish-polygon">
+              Finish &amp; Generate Grid
+            </button>
+          </div>
+          <p class="muted" id="vertex-count">0 vertices</p>
+        </section>
+
+        <section class="panel-section" id="paint-section">
+          <h2>Density</h2>
+          <p class="muted">
+            Based on Herbert Jacobs' crowd-density method. Each swatch below
+            shows roughly how tightly people stand at that level.
+          </p>
+          <div class="btn-group density-group" id="density-group">
+            <button
+              type="button"
+              class="density-btn active"
+              data-density="empty"
+            >
+              <span
+                class="density-preview density-preview-empty"
+                aria-hidden="true"
+              ></span>
+              <span class="density-text">
+                <span class="density-name">Empty</span>
+                <span class="density-desc">No crowd in this block</span>
+              </span>
+            </button>
+            <button type="button" class="density-btn" data-density="light">
+              <span
+                class="density-preview density-preview-light"
+                aria-hidden="true"
+              ></span>
+              <span class="density-text">
+                <span class="density-name">Light <em>(1/m&sup2;)</em></span>
+                <span class="density-desc"
+                  >Loose, comfortable spacing &mdash; easy to walk through, like
+                  a relaxed park gathering</span
+                >
+              </span>
+            </button>
+            <button type="button" class="density-btn" data-density="moderate">
+              <span
+                class="density-preview density-preview-moderate"
+                aria-hidden="true"
+              ></span>
+              <span class="density-text">
+                <span class="density-name"
+                  >Moderate <em>(1.5/m&sup2;)</em></span
+                >
+                <span class="density-desc"
+                  >Noticeably filled in &mdash; still easy to move, like a busy
+                  farmers market or street fair</span
+                >
+              </span>
+            </button>
+            <button type="button" class="density-btn" data-density="dense">
+              <span
+                class="density-preview density-preview-dense"
+                aria-hidden="true"
+              ></span>
+              <span class="density-text">
+                <span class="density-name">Dense <em>(2.4/m&sup2;)</em></span>
+                <span class="density-desc"
+                  >Shoulder-to-shoulder &mdash; movement is slow, like a busy
+                  concourse or rally</span
+                >
+              </span>
+            </button>
+            <button type="button" class="density-btn" data-density="veryDense">
+              <span
+                class="density-preview density-preview-verydense"
+                aria-hidden="true"
+              ></span>
+              <span class="density-text">
+                <span class="density-name"
+                  >Very Dense <em>(4.3/m&sup2;)</em></span
+                >
+                <span class="density-desc"
+                  >Tightly packed &mdash; almost no personal space, like a mosh
+                  pit or crush at the barricade</span
+                >
+              </span>
+            </button>
+          </div>
+        </section>
+
+        <section class="panel-section totals">
+          <h2>Estimate</h2>
+          <dl>
+            <dt>Total Area</dt>
+            <dd><span id="total-area">0</span> m&sup2;</dd>
+            <dt>Grid Blocks</dt>
+            <dd><span id="total-blocks">0</span> (10 m&sup2; each)</dd>
+            <dt>Estimated Crowd</dt>
+            <dd id="total-crowd" class="crowd-total">0</dd>
+          </dl>
+        </section>
+
+        <section class="panel-section">
+          <button type="button" id="clear-all" class="danger">Clear All</button>
+        </section>
+      </aside>
+    </main>
+
+    <footer class="app-footer">
+      Imagery &copy; Esri, Maxar, Earthstar Geographics &mdash; Search by
+      <a
+        href="https://nominatim.openstreetmap.org/"
+        target="_blank"
+        rel="noopener"
+        >OpenStreetMap Nominatim</a
+      >
+    </footer>
+
+    <script src="app.js"></script>
+  </body>
+</html>
