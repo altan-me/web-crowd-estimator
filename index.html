@@ -337,6 +337,52 @@
       </aside>
     </main>
 
+    <!-- Mobile-only: the density picker as a fixed bottom palette, so painting
+         never requires scrolling down to the panel. -->
+    <div
+      class="density-bar"
+      id="density-bar"
+      role="group"
+      aria-label="Paint density"
+      hidden
+    >
+      <button type="button" class="density-btn" data-density="empty">
+        <span
+          class="density-preview density-preview-empty"
+          aria-hidden="true"
+        ></span>
+        <span class="density-bar-label">Empty</span>
+      </button>
+      <button type="button" class="density-btn" data-density="light">
+        <span
+          class="density-preview density-preview-light"
+          aria-hidden="true"
+        ></span>
+        <span class="density-bar-label">Light</span>
+      </button>
+      <button type="button" class="density-btn" data-density="moderate">
+        <span
+          class="density-preview density-preview-moderate"
+          aria-hidden="true"
+        ></span>
+        <span class="density-bar-label">Moderate</span>
+      </button>
+      <button type="button" class="density-btn" data-density="dense">
+        <span
+          class="density-preview density-preview-dense"
+          aria-hidden="true"
+        ></span>
+        <span class="density-bar-label">Dense</span>
+      </button>
+      <button type="button" class="density-btn" data-density="veryDense">
+        <span
+          class="density-preview density-preview-verydense"
+          aria-hidden="true"
+        ></span>
+        <span class="density-bar-label">Very Dense</span>
+      </button>
+    </div>
+
     <footer class="app-footer">
       <p>
         Imagery &copy; Esri, Maxar, Earthstar Geographics &mdash; Search by

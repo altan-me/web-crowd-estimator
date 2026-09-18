@@ -167,6 +167,7 @@
 
   const densityGroupEl = document.getElementById("density-group");
   const densityLockedEl = document.getElementById("density-locked");
+  const densityBarEl = document.getElementById("density-bar");
 
   const totalAreaEl = document.getElementById("total-area");
   const totalBlocksEl = document.getElementById("total-blocks");
@@ -714,6 +715,10 @@
     const locked = state.blocks.length === 0;
     densityGroupEl.classList.toggle("locked", locked);
     densityLockedEl.hidden = !locked;
+    // The mobile density palette only shows once there is a grid to paint.
+    const showDensityBar = !locked && mode === "paint";
+    densityBarEl.hidden = !showDensityBar;
+    document.body.classList.toggle("has-density-bar", showDensityBar);
   }
 
   function setMode(newMode) {
