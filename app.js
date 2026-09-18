@@ -13,6 +13,7 @@
   const MIN_ZOOM = 3;
   const MAX_ZOOM = 22;
   const MAX_TILE_ZOOM = 19; // highest zoom level with real imagery tiles; beyond this we scale up MAX_TILE_ZOOM tiles
+  const COUNT_DURATION_MS = 600; // header crowd total count-up
   const TILE_URL = (x, y, z) =>
     `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${z}/${y}/${x}`;
 
@@ -170,6 +171,10 @@
   const totalAreaEl = document.getElementById("total-area");
   const totalBlocksEl = document.getElementById("total-blocks");
   const totalCrowdEl = document.getElementById("total-crowd");
+
+  const titleDefaultEl = document.getElementById("title-default");
+  const titleEstimateEl = document.getElementById("title-estimate");
+  const titleCountEl = document.getElementById("title-count");
 
   const clearAllBtn = document.getElementById("clear-all");
 
@@ -373,7 +378,75 @@
     totalAreaEl.textContent = Math.round(state.totalAreaM2).toLocaleString();
     totalBlocksEl.textContent = state.blocks.length.toLocaleString();
     totalCrowdEl.textContent = Math.round(crowd).toLocaleString();
+    updateTitleEstimate(crowd);
     updateWorkflow();
+  }
+
+  // ---------------------------------------------------------------------
+  // Header estimate
+  // ---------------------------------------------------------------------
+  // The header title turns into a running crowd total as soon as there is one,
+  // counting up to each new value instead of jumping straight to it.
+  const reduceMotionQuery = window.matchMedia(
+    "(prefers-reduced-motion: reduce)",
+  );
+  let displayedCrowd = 0;
+  let countFrame = 0;
+  let countTarget = -1;
+
+  function updateTitleEstimate(crowd) {
+    const target = Math.round(crowd);
+    titleDefaultEl.hidden = target > 0;
+    titleEstimateEl.hidden = target === 0;
+
+    if (target === countTarget) return; // already showing or heading there
+    countTarget = target;
+
+    if (countFrame) cancelAnimationFrame(countFrame);
+    countFrame = 0;
+
+    if (target === 0) {
+      displayedCrowd = 0;
+      titleCountEl.textContent = "0";
+      return;
+    }
+    countUpTo(target);
+  }
+
+  function countUpTo(target) {
+    const from = displayedCrowd;
+    if (from === target) return; // nothing changed, so nothing to celebrate
+    if (reduceMotionQuery.matches) {
+      displayedCrowd = target;
+      titleCountEl.textContent = target.toLocaleString();
+      return;
+    }
+
+    let start = null;
+    const step = (now) => {
+      if (start === null) start = now;
+      const t = Math.min(1, (now - start) / COUNT_DURATION_MS);
+      const eased = 1 - Math.pow(1 - t, 3); // easeOutCubic
+      displayedCrowd = Math.round(from + (target - from) * eased);
+      titleCountEl.textContent = displayedCrowd.toLocaleString();
+      if (t < 1) {
+        countFrame = requestAnimationFrame(step);
+      } else {
+        countFrame = 0;
+        displayedCrowd = target;
+        titleCountEl.textContent = target.toLocaleString();
+      }
+    };
+    countFrame = requestAnimationFrame(step);
+    popCount();
+  }
+
+  function popCount() {
+    if (reduceMotionQuery.matches) return;
+    titleCountEl.animate?.(
+      [{ transform: "scale(1.18)" }, { transform: "scale(1)" }],
+      { duration: 280, easing: "ease-out" },
+    );
   }
 
   // ---------------------------------------------------------------------

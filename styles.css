@@ -50,6 +50,43 @@ body {
   white-space: nowrap;
 }
 
+/* Once there is a crowd estimate the title becomes a live total. */
+.title-estimate {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35rem;
+}
+
+/* `hidden` needs to beat the display rule above. */
+.title-estimate[hidden] {
+  display: none;
+}
+
+/* The icon shares the row's baseline alignment with the smaller word below it,
+   so centre it against the taller number instead. */
+.title-icon {
+  align-self: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  color: var(--accent);
+}
+
+.title-count {
+  display: inline-block;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.title-suffix {
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
 .search-form {
   display: flex;
   gap: 0.4rem;
