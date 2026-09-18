@@ -148,6 +148,46 @@ button.danger:hover {
   max-width: 60%;
 }
 
+.tile-loading {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.7rem;
+  background: rgba(10, 14, 24, 0.75);
+  border-radius: 6px;
+  font-size: 0.8rem;
+  color: var(--text);
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
+}
+
+.tile-loading.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-top-color: var(--accent);
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .panel {
   width: 300px;
   flex-shrink: 0;

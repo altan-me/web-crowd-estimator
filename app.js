@@ -146,6 +146,7 @@
   const canvas = document.getElementById("map-canvas");
   const ctx = canvas.getContext("2d");
   const hintEl = document.getElementById("hint");
+  const tileLoadingEl = document.getElementById("tile-loading");
 
   const searchForm = document.getElementById("search-form");
   const searchInput = document.getElementById("search-input");
@@ -187,6 +188,7 @@
   const dpr = Math.max(1, window.devicePixelRatio || 1);
 
   const tileCache = new Map(); // "z/x/y" -> HTMLImageElement (loaded or loading)
+  const pendingTiles = new Set(); // keys of tiles still being fetched, drives the loading indicator
   let drawScheduled = false;
 
   // Interaction state
@@ -407,10 +409,22 @@
       img = new Image();
       img.crossOrigin = "anonymous";
       img.src = TILE_URL(wrappedX, y, z);
-      img.onload = () => scheduleDraw();
+      pendingTiles.add(key);
+      updateTileLoadingIndicator();
+      const settle = () => {
+        pendingTiles.delete(key);
+        updateTileLoadingIndicator();
+        scheduleDraw();
+      };
+      img.onload = settle;
+      img.onerror = settle;
       tileCache.set(key, img);
     }
     return img;
+  }
+
+  function updateTileLoadingIndicator() {
+    tileLoadingEl.classList.toggle("visible", pendingTiles.size > 0);
   }
 
   function drawTiles() {
