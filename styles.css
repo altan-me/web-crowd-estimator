@@ -333,6 +333,10 @@ button.danger:hover {
   margin: 0.4rem 0 0;
 }
 
+.density-intro {
+  margin-bottom: 0.75rem;
+}
+
 .totals dl {
   margin: 0;
   display: grid;
@@ -375,29 +379,29 @@ button.danger:hover {
   color: var(--accent);
 }
 
+.panel-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+}
+
 .issue-link {
-  position: fixed;
-  right: 12px;
-  bottom: 12px;
-  z-index: 20;
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  padding: 0.4rem 0.75rem;
+  padding: 0.45rem 0.6rem;
   border: 1px solid var(--panel-border);
-  border-radius: 999px;
-  background: var(--panel-bg);
-  color: var(--text) !important;
+  border-radius: 6px;
+  background: #1d2740;
+  color: var(--text);
   text-decoration: none;
-  font-size: 0.75rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
-  transition:
-    opacity 0.2s ease,
-    transform 0.2s ease;
+  font-size: 0.85rem;
+  white-space: nowrap;
 }
 
 .issue-link:hover {
-  background: #1d2740;
+  background: #26304a;
   border-color: var(--accent);
 }
 
@@ -428,17 +432,5 @@ button.danger:hover {
     flex: 0 0 auto;
     max-height: none;
     overflow-y: visible;
-  }
-
-  /* Only reveal the floating issue button once the bottom of the page is in view. */
-  .issue-link {
-    opacity: 0;
-    transform: translateY(8px);
-    pointer-events: none;
-  }
-  .issue-link.visible {
-    opacity: 1;
-    transform: none;
-    pointer-events: auto;
   }
 }

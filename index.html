@@ -19,6 +19,13 @@
       content="black-translucent"
     />
     <meta name="apple-mobile-web-app-title" content="Crowd Estimator" />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="192x192"
+      href="./icons/icon-192.png"
+    />
+    <link rel="apple-touch-icon" href="./icons/icon-180.png" />
   </head>
   <body>
     <header class="app-header">
@@ -141,7 +148,7 @@
 
         <section class="panel-section" id="paint-section">
           <h2>Density</h2>
-          <p class="muted">
+          <p class="muted density-intro">
             Based on Herbert Jacobs' crowd-density method. Each swatch below
             shows roughly how tightly people stand at that level.
           </p>
@@ -231,8 +238,28 @@
           </dl>
         </section>
 
-        <section class="panel-section">
+        <section class="panel-section panel-actions">
           <button type="button" id="clear-all" class="danger">Clear All</button>
+          <a
+            id="issue-link"
+            class="issue-link"
+            href="https://github.com/altan-me/web-crowd-estimator/issues"
+            target="_blank"
+            rel="noopener"
+          >
+            <svg
+              class="issue-icon"
+              viewBox="0 0 16 16"
+              aria-hidden="true"
+              focusable="false"
+            >
+              <path
+                fill="currentColor"
+                d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0Zm0 14.5A6.5 6.5 0 1 1 8 1.5a6.5 6.5 0 0 1 0 13ZM8 4a1 1 0 0 1 1 1v4a1 1 0 1 1-2 0V5a1 1 0 0 1 1-1Zm0 8.25a1.13 1.13 0 1 1 0-2.25 1.13 1.13 0 0 1 0 2.25Z"
+              />
+            </svg>
+            Report an Issue
+          </a>
         </section>
       </aside>
     </main>
@@ -248,27 +275,6 @@
         >
       </p>
     </footer>
-
-    <a
-      id="issue-link"
-      class="issue-link"
-      href="https://github.com/altan-me/web-crowd-estimator/issues"
-      target="_blank"
-      rel="noopener"
-    >
-      <svg
-        class="issue-icon"
-        viewBox="0 0 16 16"
-        aria-hidden="true"
-        focusable="false"
-      >
-        <path
-          fill="currentColor"
-          d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0Zm0 14.5A6.5 6.5 0 1 1 8 1.5a6.5 6.5 0 0 1 0 13ZM8 4a1 1 0 0 1 1 1v4a1 1 0 1 1-2 0V5a1 1 0 0 1 1-1Zm0 8.25a1.13 1.13 0 1 1 0-2.25 1.13 1.13 0 0 1 0 2.25Z"
-        />
-      </svg>
-      Report an Issue
-    </a>
 
     <script src="app.js"></script>
   </body>

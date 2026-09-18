@@ -3,6 +3,7 @@ wrangler.toml
 package.json
 package-lock.json
 node_modules
+tools
 .git
 .gitattributes
 .assetsignore
