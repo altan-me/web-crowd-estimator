@@ -160,6 +160,12 @@
   const undoPointBtn = document.getElementById("undo-point");
   const finishPolygonBtn = document.getElementById("finish-polygon");
   const vertexCountEl = document.getElementById("vertex-count");
+  const stepLabelEl = document.getElementById("step-label");
+  const stepTextEl = document.getElementById("step-text");
+  const drawControlsEl = document.getElementById("draw-controls");
+
+  const densityGroupEl = document.getElementById("density-group");
+  const densityLockedEl = document.getElementById("density-locked");
 
   const totalAreaEl = document.getElementById("total-area");
   const totalBlocksEl = document.getElementById("total-blocks");
@@ -367,6 +373,7 @@
     totalAreaEl.textContent = Math.round(state.totalAreaM2).toLocaleString();
     totalBlocksEl.textContent = state.blocks.length.toLocaleString();
     totalCrowdEl.textContent = Math.round(crowd).toLocaleString();
+    updateWorkflow();
   }
 
   // ---------------------------------------------------------------------
@@ -539,18 +546,101 @@
   // ---------------------------------------------------------------------
   // UI updates
   // ---------------------------------------------------------------------
+  // True on phones and tablets, where the primary pointer can't hover. Touch
+  // screens with a mouse attached keep reporting "fine", so they keep the
+  // mouse wording.
+  const touchPrimaryQuery = window.matchMedia(
+    "(hover: none) and (pointer: coarse)",
+  );
+
   function updateHint() {
-    if (mode === "pan") hintEl.textContent = "Drag to pan, scroll to zoom.";
+    const touch = touchPrimaryQuery.matches;
+    const press = touch ? "Tap" : "Click";
+    if (mode === "pan")
+      hintEl.textContent = touch
+        ? "Drag to pan, pinch to zoom."
+        : "Drag to pan, scroll to zoom.";
     else if (mode === "draw")
       hintEl.textContent =
-        'Click on the map to add polygon vertices, then "Finish & Generate Grid".';
+        `${press} on the map to add polygon vertices, then ` +
+        '"Finish & Generate Grid".';
     else
-      hintEl.textContent =
-        "Click or drag over grid blocks to paint the selected density.";
+      hintEl.textContent = `${press} or drag over grid blocks to paint the selected density.`;
   }
 
   function updateVertexCount() {
-    vertexCountEl.textContent = `${state.polygon.length} vertices`;
+    const points = state.polygon.length;
+    if (points === 0) vertexCountEl.textContent = "No points yet";
+    else if (points < 3)
+      vertexCountEl.textContent =
+        `${points} of 3 points placed, ${3 - points} to go`;
+    else if (state.polygonClosed)
+      vertexCountEl.textContent = `${points} points, grid generated`;
+    else vertexCountEl.textContent = `${points} points, ready to generate the grid`;
+    updateWorkflow();
+  }
+
+  // The three modes are meant to be used in order, so every state change
+  // re-derives which step the user is on and what they should do next.
+  function currentStep() {
+    const points = state.polygon.length;
+    const hasGrid = state.blocks.length > 0;
+
+    if (hasGrid) {
+      if (mode !== "paint")
+        return {
+          step: 3,
+          message:
+            'Choose "Paint Grid" above, then paint the blocks with a density.',
+        };
+      if (!state.blocks.some((block) => block.densityLevel !== "empty"))
+        return {
+          step: 3,
+          message:
+            "Pick a density below, then tap or drag across the grid blocks.",
+        };
+      return {
+        step: 3,
+        message:
+          'Keep painting, or read the estimate below. "Clear All" starts over.',
+      };
+    }
+
+    if (points >= 3)
+      return {
+        step: 2,
+        message:
+          'Click "Finish & Generate Grid" when the outline looks right.',
+      };
+    if (mode === "draw")
+      return {
+        step: 2,
+        message:
+          "Tap the map to mark the corners of the area, 3 points minimum.",
+      };
+    if (points === 0)
+      return {
+        step: 1,
+        message:
+          'Pan and zoom to find the area, then choose "Draw Polygon" above.',
+      };
+    return {
+      step: 2,
+      message: 'Choose "Draw Polygon" above to add the remaining points.',
+    };
+  }
+
+  function updateWorkflow() {
+    const { step, message } = currentStep();
+    stepLabelEl.textContent = `Step ${step} of 3`;
+    stepTextEl.textContent = message;
+    // The polygon controls only make sense while drawing.
+    drawControlsEl.hidden = mode !== "draw";
+    undoPointBtn.disabled = state.polygon.length === 0;
+    finishPolygonBtn.disabled = state.polygon.length < 3;
+    const locked = state.blocks.length === 0;
+    densityGroupEl.classList.toggle("locked", locked);
+    densityLockedEl.hidden = !locked;
   }
 
   function setMode(newMode) {
@@ -559,6 +649,7 @@
       btn.classList.toggle("active", btn.dataset.mode === mode),
     );
     updateHint();
+    updateWorkflow();
   }
 
   function setDensity(newDensity) {
@@ -574,6 +665,10 @@
   modeButtons.forEach((btn) => {
     btn.addEventListener("click", () => setMode(btn.dataset.mode));
   });
+
+  // Re-word the hints when the input type changes, e.g. a mouse is plugged into
+  // a tablet or the browser starts emulating touch.
+  touchPrimaryQuery.addEventListener?.("change", updateHint);
 
   densityButtons.forEach((btn) => {
     btn.addEventListener("click", () => setDensity(btn.dataset.density));

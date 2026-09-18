@@ -102,6 +102,19 @@ button.danger:hover {
   background: rgba(239, 83, 80, 0.15);
 }
 
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+button:disabled:hover {
+  background: #1d2740;
+}
+
+button.danger:disabled:hover {
+  background: transparent;
+}
+
 .app-main {
   flex: 1;
   display: flex;
@@ -211,8 +224,7 @@ button.danger:hover {
   margin: 0 0 0.5rem;
 }
 
-.btn-group,
-.btn-row {
+.btn-group {
   display: flex;
   flex-wrap: wrap;
   gap: 0.4rem;
@@ -232,8 +244,128 @@ button.danger:hover {
   flex-shrink: 0;
 }
 
+/* Step numbers on the mode buttons: the three modes are meant to be used in order. */
+.step-badge {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.14);
+  font-size: 0.65rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+/* Controls for the selected mode, nested directly under its mode button. */
+.mode-sub {
+  flex: 1 1 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.5rem;
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  background: rgba(10, 14, 24, 0.45);
+}
+
+/* `hidden` needs to beat the display rule above. */
+.mode-sub[hidden] {
+  display: none;
+}
+
+.mode-sub:not([hidden]) {
+  animation: sub-in 0.18s ease;
+}
+
+@keyframes sub-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+.sub-row {
+  display: flex;
+  gap: 0.35rem;
+}
+
+/* Denser than the mode buttons so the nested controls stay secondary. */
+.sub-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.4rem 0.5rem;
+  font-size: 0.78rem;
+}
+
+.sub-btn.primary {
+  flex: 1;
+  justify-content: center;
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.sub-btn.primary:hover {
+  background: #26304a;
+}
+
+.sub-icon {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
+
+.sub-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+/* Live guidance for the current step, driven by app state (see updateWorkflow). */
+.next-step {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  margin-top: 0.75rem;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--panel-border);
+  border-left: 3px solid var(--accent);
+  border-radius: 6px;
+  background: rgba(79, 140, 255, 0.09);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.next-step-label {
+  flex-shrink: 0;
+  color: var(--accent);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
 .density-group {
   flex-direction: column;
+}
+
+/* Density swatches stay locked until there is a grid to paint. */
+.density-group.locked {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.locked-note {
+  margin: 0.5rem 0 0;
+  padding: 0.4rem 0.55rem;
+  border: 1px dashed var(--panel-border);
+  border-radius: 6px;
+  color: var(--muted);
+  font-size: 0.75rem;
 }
 
 .density-btn {
@@ -379,7 +511,38 @@ button.danger:hover {
   color: var(--accent);
 }
 
+/* Small "buy me a coffee" link, tucked under the issue button. */
+.app-support {
+  align-self: flex-end;
+  margin: 0;
+  font-size: 0.75rem;
+}
+
+.app-support a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.app-support a:hover {
+  text-decoration: underline;
+}
+
+.support-icon {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
+
 .panel-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.panel-actions-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -425,6 +588,11 @@ button.danger:hover {
     flex: 0 0 auto;
     height: 62vh;
   }
+  /* Nested controls get a slightly larger tap target on touch screens. */
+  .sub-btn {
+    padding: 0.45rem 0.55rem;
+  }
+
   .panel {
     width: 100%;
     border-left: none;

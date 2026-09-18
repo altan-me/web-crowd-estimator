@@ -56,9 +56,10 @@
 
       <aside class="panel">
         <section class="panel-section">
-          <h2>Mode</h2>
+          <h2>Steps</h2>
           <div class="btn-group" id="mode-group">
             <button type="button" class="mode-btn active" data-mode="pan">
+              <span class="step-badge" aria-hidden="true">1</span>
               <svg
                 class="mode-icon"
                 viewBox="0 0 24 24"
@@ -73,6 +74,7 @@
               Pan / Zoom
             </button>
             <button type="button" class="mode-btn" data-mode="draw">
+              <span class="step-badge" aria-hidden="true">2</span>
               <svg
                 class="mode-icon"
                 viewBox="0 0 24 24"
@@ -94,7 +96,41 @@
               </svg>
               Draw Polygon
             </button>
+            <div class="mode-sub" id="draw-controls" hidden>
+              <div class="sub-row">
+                <button type="button" class="sub-btn" id="undo-point">
+                  <svg
+                    class="sub-icon"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                    focusable="false"
+                  >
+                    <path
+                      fill="currentColor"
+                      d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"
+                    />
+                  </svg>
+                  Undo
+                </button>
+                <button type="button" class="sub-btn primary" id="finish-polygon">
+                  <svg
+                    class="sub-icon"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                    focusable="false"
+                  >
+                    <path
+                      fill="currentColor"
+                      d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"
+                    />
+                  </svg>
+                  Finish &amp; Generate Grid
+                </button>
+              </div>
+              <p class="sub-note" id="vertex-count">No points yet</p>
+            </div>
             <button type="button" class="mode-btn" data-mode="paint">
+              <span class="step-badge" aria-hidden="true">3</span>
               <svg
                 class="mode-icon"
                 viewBox="0 0 24 24"
@@ -133,17 +169,10 @@
               Paint Grid
             </button>
           </div>
-        </section>
-
-        <section class="panel-section" id="draw-section">
-          <h2>Polygon</h2>
-          <div class="btn-row">
-            <button type="button" id="undo-point">Undo Point</button>
-            <button type="button" id="finish-polygon">
-              Finish &amp; Generate Grid
-            </button>
+          <div class="next-step" aria-live="polite">
+            <span class="next-step-label" id="step-label">Step 1 of 3</span>
+            <span id="step-text">Pan and zoom to find the area, then choose "Draw Polygon" above.</span>
           </div>
-          <p class="muted" id="vertex-count">0 vertices</p>
         </section>
 
         <section class="panel-section" id="paint-section">
@@ -151,6 +180,9 @@
           <p class="muted density-intro">
             Based on Herbert Jacobs' crowd-density method. Each swatch below
             shows roughly how tightly people stand at that level.
+          </p>
+          <p class="locked-note" id="density-locked" hidden>
+            Generate the grid first, then come back to paint densities.
           </p>
           <div class="btn-group density-group" id="density-group">
             <button
@@ -239,27 +271,51 @@
         </section>
 
         <section class="panel-section panel-actions">
-          <button type="button" id="clear-all" class="danger">Clear All</button>
-          <a
-            id="issue-link"
-            class="issue-link"
-            href="https://github.com/altan-me/web-crowd-estimator/issues"
-            target="_blank"
-            rel="noopener"
-          >
-            <svg
-              class="issue-icon"
-              viewBox="0 0 16 16"
-              aria-hidden="true"
-              focusable="false"
+          <div class="panel-actions-row">
+            <button type="button" id="clear-all" class="danger">
+              Clear All
+            </button>
+            <a
+              id="issue-link"
+              class="issue-link"
+              href="https://github.com/altan-me/web-crowd-estimator/issues"
+              target="_blank"
+              rel="noopener"
             >
-              <path
-                fill="currentColor"
-                d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0Zm0 14.5A6.5 6.5 0 1 1 8 1.5a6.5 6.5 0 0 1 0 13ZM8 4a1 1 0 0 1 1 1v4a1 1 0 1 1-2 0V5a1 1 0 0 1 1-1Zm0 8.25a1.13 1.13 0 1 1 0-2.25 1.13 1.13 0 0 1 0 2.25Z"
-              />
-            </svg>
-            Report an Issue
-          </a>
+              <svg
+                class="issue-icon"
+                viewBox="0 0 16 16"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <path
+                  fill="currentColor"
+                  d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0Zm0 14.5A6.5 6.5 0 1 1 8 1.5a6.5 6.5 0 0 1 0 13ZM8 4a1 1 0 0 1 1 1v4a1 1 0 1 1-2 0V5a1 1 0 0 1 1-1Zm0 8.25a1.13 1.13 0 1 1 0-2.25 1.13 1.13 0 0 1 0 2.25Z"
+                />
+              </svg>
+              Report an Issue
+            </a>
+          </div>
+          <p class="app-support">
+            <a
+              href="https://buymeacoffee.com/altan.me"
+              target="_blank"
+              rel="noopener"
+            >
+              <svg
+                class="support-icon"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <path
+                  fill="currentColor"
+                  d="M20 3H4v10c0 2.21 1.79 4 4 4h6c2.21 0 4-1.79 4-4v-3h2c1.11 0 2-.89 2-2V5c0-1.11-.89-2-2-2zm0 5h-2V5h2v3zM4 19h16v2H4z"
+                />
+              </svg>
+              Buy me a coffee
+            </a>
+          </p>
         </section>
       </aside>
     </main>
