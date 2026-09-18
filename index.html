@@ -34,12 +34,77 @@
           <h2>Mode</h2>
           <div class="btn-group" id="mode-group">
             <button type="button" class="mode-btn active" data-mode="pan">
+              <svg
+                class="mode-icon"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <path
+                  fill="currentColor"
+                  d="M12 2 9 5h2v6H5V5h2L4 2 1 5h2v6a2 2 0 0 0 2 2h6v6H9l3 3 3-3h-2v-6h6a2 2 0 0 0 2-2V5h2l-3-3-3 3h2v6h-6V5h2z"
+                />
+              </svg>
               Pan / Zoom
             </button>
             <button type="button" class="mode-btn" data-mode="draw">
+              <svg
+                class="mode-icon"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <polygon
+                  points="12,3 21,9 18,20 6,20 3,9"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linejoin="round"
+                />
+                <circle cx="12" cy="3" r="1.8" fill="currentColor" />
+                <circle cx="21" cy="9" r="1.8" fill="currentColor" />
+                <circle cx="18" cy="20" r="1.8" fill="currentColor" />
+                <circle cx="6" cy="20" r="1.8" fill="currentColor" />
+                <circle cx="3" cy="9" r="1.8" fill="currentColor" />
+              </svg>
               Draw Polygon
             </button>
             <button type="button" class="mode-btn" data-mode="paint">
+              <svg
+                class="mode-icon"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <g
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linejoin="round"
+                >
+                  <rect x="3" y="3" width="6" height="6" />
+                  <rect x="9.5" y="3" width="6" height="6" />
+                  <rect x="16" y="3" width="5" height="6" />
+                  <rect x="3" y="9.5" width="6" height="6" />
+                  <rect
+                    x="9.5"
+                    y="9.5"
+                    width="6"
+                    height="6"
+                    fill="currentColor"
+                  />
+                  <rect x="16" y="9.5" width="5" height="6" />
+                  <rect x="3" y="16" width="6" height="5" />
+                  <rect x="9.5" y="16" width="6" height="5" />
+                  <rect
+                    x="16"
+                    y="16"
+                    width="5"
+                    height="5"
+                    fill="currentColor"
+                  />
+                </g>
+              </svg>
               Paint Grid
             </button>
           </div>
