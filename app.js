@@ -151,6 +151,9 @@
 
   const searchForm = document.getElementById("search-form");
   const searchInput = document.getElementById("search-input");
+  const searchEl = document.getElementById("search");
+  const searchToggleBtn = document.getElementById("search-toggle");
+  const headerEl = document.querySelector(".app-header");
 
   const zoomInBtn = document.getElementById("zoom-in");
   const zoomOutBtn = document.getElementById("zoom-out");
@@ -816,6 +819,32 @@
     setMode("draw");
   });
 
+  // The address search stays collapsed to an icon until it is wanted: the header
+  // keeps its full width for the crowd total, which matters most on phones.
+  function setSearchOpen(open) {
+    searchForm.hidden = !open;
+    headerEl.classList.toggle("search-open", open);
+    searchToggleBtn.setAttribute("aria-expanded", String(open));
+    if (open) searchInput.focus();
+    else searchInput.blur();
+  }
+
+  searchToggleBtn.addEventListener("click", () => {
+    setSearchOpen(searchForm.hidden);
+  });
+
+  searchInput.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") setSearchOpen(false);
+  });
+
+  // Tapping or clicking anywhere outside collapses it again. Handling this on
+  // pointerdown (rather than a blur listener) keeps taps on the toggle itself
+  // from collapsing and immediately re-opening the field.
+  document.addEventListener("pointerdown", (e) => {
+    if (searchForm.hidden || searchEl.contains(e.target)) return;
+    setSearchOpen(false);
+  });
+
   searchForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     const query = searchInput.value.trim();
@@ -830,6 +859,8 @@
         state.view.zoom = 18;
         scheduleDraw();
         saveState();
+        // Leave the map unobstructed once the place is found.
+        setSearchOpen(false);
       }
     } catch (err) {
       console.warn("Search failed", err);

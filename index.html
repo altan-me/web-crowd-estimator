@@ -47,14 +47,49 @@
           <span class="title-suffix">estimated</span>
         </span>
       </h1>
-      <form id="search-form" class="search-form" autocomplete="off">
-        <input
-          type="text"
-          id="search-input"
-          placeholder="Search a place or address..."
-        />
-        <button type="submit" id="search-btn">Go</button>
-      </form>
+      <div class="search" id="search">
+        <button
+          type="button"
+          class="search-toggle"
+          id="search-toggle"
+          aria-expanded="false"
+          aria-controls="search-form"
+          aria-label="Search Address"
+          title="Search a place or address"
+        >
+          <svg
+            class="search-icon search-icon-open"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <path
+              fill="currentColor"
+              d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
+            />
+          </svg>
+          <span class="search-toggle-label">Search Address</span>
+          <svg
+            class="search-icon search-icon-close"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <path
+              fill="currentColor"
+              d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+            />
+          </svg>
+        </button>
+        <form id="search-form" class="search-form" autocomplete="off" hidden>
+          <input
+            type="text"
+            id="search-input"
+            placeholder="Search a place or address..."
+          />
+          <button type="submit" id="search-btn">Go</button>
+        </form>
+      </div>
     </header>
 
     <main class="app-main">
