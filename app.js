@@ -828,4 +828,13 @@
   }
 
   window.addEventListener("load", init);
+
+  // Registering a service worker makes the app installable ("Add to Home Screen").
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker
+        .register("sw.js")
+        .catch((e) => console.warn("Service worker registration failed", e));
+    });
+  }
 })();

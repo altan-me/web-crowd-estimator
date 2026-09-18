@@ -17,6 +17,7 @@ html,
 body {
   height: 100%;
   margin: 0;
+  overflow-x: hidden;
 }
 
 body {
@@ -53,11 +54,13 @@ body {
   display: flex;
   gap: 0.4rem;
   flex: 1;
+  min-width: 0;
   max-width: 420px;
 }
 
 .search-form input {
   flex: 1;
+  min-width: 0;
   padding: 0.4rem 0.6rem;
   border-radius: 6px;
   border: 1px solid var(--panel-border);
@@ -369,13 +372,25 @@ button.danger:hover {
 }
 
 @media (max-width: 720px) {
+  html,
+  body {
+    height: auto;
+    min-height: 100%;
+  }
   .app-main {
     flex-direction: column;
+    min-height: 0;
+  }
+  .map-wrap {
+    flex: 0 0 auto;
+    height: 62vh;
   }
   .panel {
     width: 100%;
     border-left: none;
     border-top: 1px solid var(--panel-border);
-    max-height: 45vh;
+    flex: 0 0 auto;
+    max-height: none;
+    overflow-y: visible;
   }
 }
