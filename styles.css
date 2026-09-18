@@ -592,6 +592,21 @@ button.danger:disabled:hover {
   color: var(--accent);
 }
 
+.share-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  width: 100%;
+  margin-top: 0.75rem;
+}
+
+.share-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
 .app-footer {
   text-align: center;
   font-size: 0.75rem;

@@ -20,6 +20,18 @@
   const CELL_SIDE_M = Math.sqrt(10); // ~3.1623 m -> 10 m^2 per cell
   const CELL_AREA_M2 = 10;
 
+  // Compact level codes: a share link lists only the painted blocks, so empty
+  // blocks (the majority) cost nothing.
+  const DENSITY_CODE = {
+    light: "l",
+    moderate: "m",
+    dense: "d",
+    veryDense: "v",
+  };
+  const LEVEL_BY_CODE = Object.fromEntries(
+    Object.entries(DENSITY_CODE).map(([level, code]) => [code, level]),
+  );
+
   const DENSITY = {
     empty: {
       label: "Empty",
@@ -175,6 +187,9 @@
   const totalAreaEl = document.getElementById("total-area");
   const totalBlocksEl = document.getElementById("total-blocks");
   const totalCrowdEl = document.getElementById("total-crowd");
+
+  const shareBtn = document.getElementById("share-btn");
+  const shareBtnTextEl = document.getElementById("share-btn-text");
 
   const titleDefaultEl = document.getElementById("title-default");
   const titleEstimateEl = document.getElementById("title-estimate");
@@ -481,6 +496,120 @@
   }
 
   // ---------------------------------------------------------------------
+  // Share links
+  // ---------------------------------------------------------------------
+  const SHARE_BUTTON_LABEL = "Copy share link";
+  let shareFeedbackTimer = 0;
+
+  // A share link carries only the polygon and the painted densities. The grid
+  // is rebuilt from the polygon on load (generateGrid is deterministic given
+  // it) and the view is fitted to the polygon, which keeps the link short.
+  function buildShareUrl() {
+    const points = state.polygon
+      .map((p) => `${p.lat.toFixed(6)}_${p.lng.toFixed(6)}`)
+      .join(";");
+    const parts = [`p=${points}`];
+    if (state.polygonClosed) parts.push("c=1");
+
+    const painted = state.blocks
+      .filter((b) => DENSITY_CODE[b.densityLevel])
+      .map((b) => `${b.id}:${DENSITY_CODE[b.densityLevel]}`);
+    if (painted.length) parts.push(`g=${painted.join(",")}`);
+
+    // The fragment never reaches the server and keeps the service worker's
+    // cache lookup matching the plain shell URL.
+    return `${location.href.split("#")[0]}#${parts.join("&")}`;
+  }
+
+  // Returns null unless the hash holds a usable polygon.
+  function parseShareUrl() {
+    if (!location.hash) return null;
+    const params = new URLSearchParams(location.hash.slice(1));
+    const rawPoints = params.get("p");
+    if (!rawPoints) return null;
+
+    const polygon = rawPoints
+      .split(";")
+      .map((pair) => {
+        const [lat, lng] = pair.split("_");
+        return { lat: Number(lat), lng: Number(lng) };
+      })
+      .filter((p) => Number.isFinite(p.lat) && Number.isFinite(p.lng));
+    if (polygon.length < 3) return null;
+
+    return {
+      polygon,
+      polygonClosed: params.get("c") === "1",
+      densities: params.get("g") || "",
+    };
+  }
+
+  function applySharedState(shared) {
+    state.polygon = shared.polygon;
+    state.polygonClosed = shared.polygonClosed;
+    // Drop local blocks first, otherwise generateGrid would keep their densities.
+    state.blocks = [];
+    generateGrid();
+
+    const blocksById = new Map(state.blocks.map((b) => [b.id, b]));
+    for (const entry of shared.densities.split(",")) {
+      const [id, code] = entry.split(":");
+      const level = LEVEL_BY_CODE[code];
+      const block = level ? blocksById.get(id) : null;
+      if (block) block.densityLevel = level;
+    }
+  }
+
+  // Centres and zooms so the polygon fills the map area with a small margin.
+  function fitViewToPolygon() {
+    if (state.polygon.length === 0) return;
+
+    const xs = state.polygon.map((p) => lonToWorldX(p.lng, 0));
+    const ys = state.polygon.map((p) => latToWorldY(p.lat, 0));
+    const minX = Math.min(...xs);
+    const maxX = Math.max(...xs);
+    const minY = Math.min(...ys);
+    const maxY = Math.max(...ys);
+
+    // World pixels double per zoom level, hence log2 of the required ratio.
+    const margin = 0.85;
+    const zoom = Math.min(
+      Math.log2((cssWidth * margin) / Math.max(maxX - minX, 1e-9)),
+      Math.log2((cssHeight * margin) / Math.max(maxY - minY, 1e-9)),
+    );
+
+    state.view.lat = worldYToLat((minY + maxY) / 2, 0);
+    state.view.lng = worldXToLon((minX + maxX) / 2, 0);
+    state.view.zoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, zoom));
+    scheduleDraw();
+    saveState();
+  }
+
+  function showShareFeedback(message) {
+    shareBtnTextEl.textContent = message;
+    if (shareFeedbackTimer) clearTimeout(shareFeedbackTimer);
+    shareFeedbackTimer = window.setTimeout(() => {
+      shareFeedbackTimer = 0;
+      shareBtnTextEl.textContent = SHARE_BUTTON_LABEL;
+    }, 1600);
+  }
+
+  async function copyShareLink() {
+    const url = buildShareUrl();
+    if (navigator.clipboard?.writeText) {
+      try {
+        await navigator.clipboard.writeText(url);
+        showShareFeedback("Link copied");
+        return;
+      } catch (err) {
+        console.warn("Could not write the share link to the clipboard", err);
+      }
+    }
+    // The clipboard API needs a secure context, so offer the link instead.
+    window.prompt("Copy this link:", url);
+  }
+
+  // ---------------------------------------------------------------------
   // Tile rendering
   // ---------------------------------------------------------------------
   function getTile(z, x, y) {
@@ -715,6 +844,7 @@
     drawControlsEl.hidden = mode !== "draw";
     undoPointBtn.disabled = state.polygon.length === 0;
     finishPolygonBtn.disabled = state.polygon.length < 3;
+    shareBtn.disabled = state.polygon.length < 3;
     const locked = state.blocks.length === 0;
     densityGroupEl.classList.toggle("locked", locked);
     densityLockedEl.hidden = !locked;
@@ -832,6 +962,8 @@
   searchToggleBtn.addEventListener("click", () => {
     setSearchOpen(searchForm.hidden);
   });
+
+  shareBtn.addEventListener("click", copyShareLink);
 
   searchInput.addEventListener("keydown", (e) => {
     if (e.key === "Escape") setSearchOpen(false);
@@ -1017,8 +1149,14 @@
   // Init
   // ---------------------------------------------------------------------
   function init() {
+    const shared = parseShareUrl();
     const hasSavedState = loadState();
-    if (!hasSavedState) {
+    if (shared) {
+      applySharedState(shared);
+      // The link has been consumed, so later reloads use the saved state rather
+      // than resetting to whatever the link described.
+      history.replaceState(null, "", location.pathname + location.search);
+    } else if (!hasSavedState) {
       const guess = guessViewFromTimezone();
       state.view.lat = guess.lat;
       state.view.lng = guess.lng;
@@ -1029,6 +1167,8 @@
     updateVertexCount();
     recalcTotals();
     resizeCanvas();
+    // Needs the canvas size, so it runs after resizeCanvas.
+    if (shared) fitViewToPolygon();
   }
 
   window.addEventListener("load", init);
