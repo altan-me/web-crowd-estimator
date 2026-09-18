@@ -809,6 +809,22 @@
 
   window.addEventListener("resize", resizeCanvas);
 
+  // On mobile, only reveal the floating "Report an Issue" button once the
+  // page footer scrolls into view (desktop keeps it always visible via CSS).
+  const footerEl = document.querySelector(".app-footer");
+  const issueLinkEl = document.getElementById("issue-link");
+  if (footerEl && issueLinkEl && "IntersectionObserver" in window) {
+    const footerObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          issueLinkEl.classList.toggle("visible", entry.isIntersecting);
+        });
+      },
+      { threshold: 0.1 },
+    );
+    footerObserver.observe(footerEl);
+  }
+
   // ---------------------------------------------------------------------
   // Init
   // ---------------------------------------------------------------------
