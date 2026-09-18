@@ -607,6 +607,45 @@ button.danger:disabled:hover {
   flex-shrink: 0;
 }
 
+/* Collapsed by default: the method behind the estimate, for anyone curious. */
+.calc-details {
+  margin-top: 0.75rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--panel-border);
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.calc-details summary {
+  cursor: pointer;
+  color: var(--accent);
+  font-size: 0.78rem;
+}
+
+.calc-body {
+  margin-top: 0.5rem;
+}
+
+.calc-body p {
+  margin: 0 0 0.5rem;
+  line-height: 1.45;
+}
+
+.calc-body ul {
+  margin: 0 0 0.5rem;
+  padding-left: 1.1rem;
+}
+
+.calc-body li {
+  margin-bottom: 0.25rem;
+  line-height: 1.45;
+}
+
+.calc-formula {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
 .app-footer {
   text-align: center;
   font-size: 0.75rem;

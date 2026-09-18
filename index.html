@@ -334,6 +334,34 @@
             </svg>
             <span id="share-btn-text" aria-live="polite">Copy share link</span>
           </button>
+          <details class="calc-details">
+            <summary>How is this calculated?</summary>
+            <div class="calc-body">
+              <p>
+                The outline is covered with a grid of 10 m&sup2; blocks (about
+                3.2 m &times; 3.2 m each). A block counts when its centre falls
+                inside the outline, and it holds no crowd until you paint it.
+                Grid Blocks is how many of those fit inside, which is why it can
+                differ a little from Total Area.
+              </p>
+              <p>Each painted block adds its density to the total:</p>
+              <p class="calc-formula">
+                estimated crowd = &Sigma; (people per m&sup2; &times; 10 m&sup2;)
+              </p>
+              <ul>
+                <li>Light = 1 person/m&sup2; &rarr; 10 people per block</li>
+                <li>Moderate = 1.5 &rarr; 15 per block</li>
+                <li>Dense = 2.4 &rarr; 24 per block</li>
+                <li>Very Dense = 4.3 &rarr; 43 per block</li>
+              </ul>
+              <p>
+                So 40 blocks painted Dense is 40 &times; 24 = 960 people. The
+                levels come from Herbert Jacobs' crowd-density method, and the
+                area is measured from the corners you placed, so both figures
+                are estimates rather than exact counts.
+              </p>
+            </div>
+          </details>
         </section>
 
         <section class="panel-section panel-actions">
