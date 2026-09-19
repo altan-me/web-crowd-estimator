@@ -169,6 +169,8 @@
 
   const zoomInBtn = document.getElementById("zoom-in");
   const zoomOutBtn = document.getElementById("zoom-out");
+  const reloadMapBtn = document.getElementById("reload-map");
+  const reloadMapIconEl = reloadMapBtn.querySelector(".control-icon");
 
   const modeButtons = Array.from(document.querySelectorAll(".mode-btn"));
   const densityButtons = Array.from(document.querySelectorAll(".density-btn"));
@@ -215,7 +217,7 @@
 
   let cssWidth = 0;
   let cssHeight = 0;
-  const dpr = Math.max(1, window.devicePixelRatio || 1);
+  let dpr = Math.max(1, window.devicePixelRatio || 1);
 
   const tileCache = new Map(); // "z/x/y" -> HTMLImageElement (loaded or loading)
   const pendingTiles = new Set(); // keys of tiles still being fetched, drives the loading indicator
@@ -741,12 +743,24 @@
   // ---------------------------------------------------------------------
   function resizeCanvas() {
     const rect = canvas.getBoundingClientRect();
+    // Re-read the ratio: it changes when the window moves between displays or
+    // when a phone's display settings change, which would leave a blurry map.
+    dpr = Math.max(1, window.devicePixelRatio || 1);
     cssWidth = rect.width;
     cssHeight = rect.height;
     canvas.width = Math.round(cssWidth * dpr);
     canvas.height = Math.round(cssHeight * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     scheduleDraw();
+  }
+
+  // Rebuilds the map from scratch: dropped tiles are requested again and the
+  // canvas is re-measured, which also redraws it. Used by the reload button.
+  function reloadMap() {
+    tileCache.clear();
+    pendingTiles.clear();
+    updateTileLoadingIndicator();
+    resizeCanvas();
   }
 
   // ---------------------------------------------------------------------
@@ -895,6 +909,28 @@
     state.view.zoom = Math.max(MIN_ZOOM, Math.round(state.view.zoom) - 1);
     scheduleDraw();
     saveState();
+  });
+
+  reloadMapBtn.addEventListener("click", () => {
+    reloadMap();
+    // A quick spin confirms the tap landed, since the redraw is near-instant.
+    if (!reduceMotionQuery.matches) {
+      reloadMapIconEl.animate?.(
+        [{ transform: "rotate(0deg)" }, { transform: "rotate(360deg)" }],
+        { duration: 500, easing: "ease-in-out" },
+      );
+    }
+  });
+
+  // Browsers may discard a canvas bitmap while a tab sits in the background,
+  // and a back/forward cache restore can return with a stale size. Either way
+  // nothing else re-draws it, which is the blank map people see on return.
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) resizeCanvas();
+  });
+
+  window.addEventListener("pageshow", (event) => {
+    if (event.persisted) resizeCanvas();
   });
 
   canvas.addEventListener(

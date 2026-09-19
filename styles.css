@@ -249,6 +249,20 @@ button.danger:disabled:hover {
   line-height: 1;
 }
 
+/* Icon-only control, so it needs flex centring rather than the baseline layout
+   the textual +/− buttons get away with. */
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.control-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
 .hint {
   position: absolute;
   left: 12px;
