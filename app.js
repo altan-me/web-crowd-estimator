@@ -216,6 +216,7 @@
 
   let mode = "pan"; // 'pan' | 'draw' | 'paint'
   let currentDensity = "light";
+  let crowdTotal = 0; // last rounded total, reused by the header and share text
 
   let cssWidth = 0;
   let cssHeight = 0;
@@ -400,7 +401,8 @@
     }
     totalAreaEl.textContent = Math.round(state.totalAreaM2).toLocaleString();
     totalBlocksEl.textContent = state.blocks.length.toLocaleString();
-    totalCrowdEl.textContent = Math.round(crowd).toLocaleString();
+    crowdTotal = Math.round(crowd);
+    totalCrowdEl.textContent = crowdTotal.toLocaleString();
     updateTitleEstimate(crowd);
     updateWorkflow();
   }
@@ -502,7 +504,6 @@
   // ---------------------------------------------------------------------
   // Share links
   // ---------------------------------------------------------------------
-  const SHARE_BUTTON_LABEL = "Copy share link";
   let shareFeedbackTimer = 0;
 
   // A share link carries only the polygon and the painted densities. The grid
@@ -589,17 +590,67 @@
     saveState();
   }
 
+  // Phones and tablets get the OS share sheet; desktops copy to the clipboard.
+  // Chrome on macOS and Linux has no share API at all, and on Windows the system
+  // flyout rejects with AbortError — or renders a placeholder preview card —
+  // when it has no usable target, which reads as a dead button. The coarse
+  // pointer media query is not enough here: touch-screen Windows machines
+  // report it too, so ask the UA client hints and fall back to the UA string
+  // for browsers that don't implement them (Safari).
+  const isMobileDevice = navigator.userAgentData
+    ? navigator.userAgentData.mobile
+    : /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+
+  // The button says what it does: the OS sheet is only worth offering where it
+  // works, and desktop browsers call the same action "copy link".
+  function shareLabel() {
+    return isMobileDevice
+      ? "Share this estimate"
+      : "Copy link to this estimate";
+  }
+
+  function updateShareLabel() {
+    if (shareFeedbackTimer) return; // leave a pending "Link copied" alone
+    shareBtnTextEl.textContent = shareLabel();
+  }
+
+  // Run now rather than in init(): that waits for the load event, so desktop
+  // would show the touch wording until the map tiles had finished loading.
+  updateShareLabel();
+
   function showShareFeedback(message) {
     shareBtnTextEl.textContent = message;
     if (shareFeedbackTimer) clearTimeout(shareFeedbackTimer);
     shareFeedbackTimer = window.setTimeout(() => {
       shareFeedbackTimer = 0;
-      shareBtnTextEl.textContent = SHARE_BUTTON_LABEL;
+      shareBtnTextEl.textContent = shareLabel();
     }, 1600);
   }
 
-  async function copyShareLink() {
+  // Mobile gets the OS share sheet; everything else copies the link, which
+  // always works and shows its own confirmation in the button.
+  async function shareEstimate() {
     const url = buildShareUrl();
+
+    if (isMobileDevice && navigator.share) {
+      const payload = { title: "Crowd Estimator", url };
+      if (crowdTotal > 0) {
+        payload.text = `Estimated crowd: ${crowdTotal.toLocaleString()} people`;
+      }
+      try {
+        await navigator.share(payload);
+        return;
+      } catch (err) {
+        // Dismissing the share sheet rejects as well; that is not a failure.
+        if (err && err.name === "AbortError") return;
+        console.warn("Native share failed, copying the link instead", err);
+      }
+    }
+
+    await copyShareLink(url);
+  }
+
+  async function copyShareLink(url) {
     if (navigator.clipboard?.writeText) {
       try {
         await navigator.clipboard.writeText(url);
@@ -1038,7 +1089,7 @@
     setSearchOpen(searchForm.hidden);
   });
 
-  shareBtn.addEventListener("click", copyShareLink);
+  shareBtn.addEventListener("click", shareEstimate);
 
   searchInput.addEventListener("keydown", (e) => {
     if (e.key === "Escape") setSearchOpen(false);
