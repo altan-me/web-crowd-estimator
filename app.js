@@ -20,17 +20,24 @@
   const CELL_SIDE_M = Math.sqrt(10); // ~3.1623 m -> 10 m^2 per cell
   const CELL_AREA_M2 = 10;
 
-  // Compact level codes: a share link lists only the painted blocks, so empty
-  // blocks (the majority) cost nothing.
-  const DENSITY_CODE = {
+  // Share-link encoding. Density levels become single letters, which keeps them
+  // distinguishable from the digit run lengths they sit next to.
+  const COORD_SCALE = 1e6; // 6 decimals, about 11 cm
+  const LEVEL_LETTER = {
+    empty: "e",
     light: "l",
     moderate: "m",
     dense: "d",
     veryDense: "v",
   };
-  const LEVEL_BY_CODE = Object.fromEntries(
-    Object.entries(DENSITY_CODE).map(([level, code]) => [code, level]),
+  const LETTER_LEVEL = Object.fromEntries(
+    Object.entries(LEVEL_LETTER).map(([level, letter]) => [letter, level]),
   );
+  // Built from the table above so the two can never drift apart.
+  const DENSITY_RUNS = new RegExp(
+    `^(\\d+[${Object.values(LEVEL_LETTER).join("")}])+$`,
+  );
+  const BASE36_INT = /^-?[0-9a-z]+$/i;
 
   const DENSITY = {
     empty: {
@@ -506,47 +513,150 @@
   // ---------------------------------------------------------------------
   let shareFeedbackTimer = 0;
 
+  // Coordinates go out as base36 integers at 6-decimal precision, and every
+  // point after the first as a delta from the previous one: a step of a few tens
+  // of metres is two or three characters rather than twenty-two.
+  function encodePolygon(points) {
+    let prevLat = 0;
+    let prevLng = 0;
+    return points
+      .map((point, index) => {
+        const lat = Math.round(point.lat * COORD_SCALE);
+        const lng = Math.round(point.lng * COORD_SCALE);
+        const dLat = index === 0 ? lat : lat - prevLat;
+        const dLng = index === 0 ? lng : lng - prevLng;
+        prevLat = lat;
+        prevLng = lng;
+        return `${dLat.toString(36)}_${dLng.toString(36)}`;
+      })
+      .join(";");
+  }
+
+  function decodePolygon(raw) {
+    const points = [];
+    let lat = 0;
+    let lng = 0;
+    for (const pair of raw.split(";")) {
+      const [rawLat, rawLng] = pair.split("_");
+      if (!BASE36_INT.test(rawLat || "") || !BASE36_INT.test(rawLng || "")) {
+        return null;
+      }
+      lat += parseInt(rawLat, 36);
+      lng += parseInt(rawLng, 36);
+      points.push({ lat: lat / COORD_SCALE, lng: lng / COORD_SCALE });
+    }
+    return points;
+  }
+
+  // Legacy links (the first version of this format) wrote coordinates as plain
+  // decimals and listed every painted block by id. They are still readable, so
+  // links shared before the compact format keep working.
+  const LEGACY_COORD = /^-?\d+(\.\d+)?$/;
+  const LEGACY_DENSITY = /^r\d+_c\d+:[lmdv]$/;
+
+  function decodeLegacyPolygon(raw) {
+    const points = [];
+    for (const pair of raw.split(";")) {
+      const [lat, lng] = pair.split("_");
+      if (!LEGACY_COORD.test(lat || "") || !LEGACY_COORD.test(lng || "")) {
+        return null;
+      }
+      points.push({ lat: Number(lat), lng: Number(lng) });
+    }
+    return points;
+  }
+
+  function applyLegacyDensities(raw, blocks) {
+    const entries = raw.split(",");
+    if (!entries.every((entry) => LEGACY_DENSITY.test(entry))) return;
+
+    const indexById = new Map(blocks.map((block, index) => [block.id, index]));
+    for (const entry of entries) {
+      const [id, code] = entry.split(":");
+      const index = indexById.get(id);
+      const level = LETTER_LEVEL[code];
+      if (index !== undefined && level) blocks[index].densityLevel = level;
+    }
+  }
+
+  // Densities as runs of equal level in block order, written <count><letter>.
+  // Empty runs at the end are implied by the regenerated grid, so unpainted area
+  // costs nothing, and a solid painted patch is two or three characters.
+  function encodeDensities(blocks) {
+    let out = "";
+    let count = 0;
+    let current = "e";
+    for (const block of blocks) {
+      const letter = LEVEL_LETTER[block.densityLevel] || "e";
+      if (letter === current) {
+        count += 1;
+      } else {
+        if (count > 0) out += count + current;
+        current = letter;
+        count = 1;
+      }
+    }
+    return current === "e" ? out : out + count + current;
+  }
+
+  function decodeDensities(raw, blocks) {
+    if (!DENSITY_RUNS.test(raw)) return;
+    let index = 0;
+    for (const [, digits, letter] of raw.matchAll(/(\d+)([a-z])/g)) {
+      const level = LETTER_LEVEL[letter];
+      let run = Number(digits);
+      while (run > 0 && index < blocks.length) {
+        blocks[index].densityLevel = level;
+        index += 1;
+        run -= 1;
+      }
+    }
+  }
+
   // A share link carries only the polygon and the painted densities. The grid
   // is rebuilt from the polygon on load (generateGrid is deterministic given
   // it) and the view is fitted to the polygon, which keeps the link short.
   function buildShareUrl() {
-    const points = state.polygon
-      .map((p) => `${p.lat.toFixed(6)}_${p.lng.toFixed(6)}`)
-      .join(";");
-    const parts = [`p=${points}`];
+    const parts = [`p=${encodePolygon(state.polygon)}`];
     if (state.polygonClosed) parts.push("c=1");
 
-    const painted = state.blocks
-      .filter((b) => DENSITY_CODE[b.densityLevel])
-      .map((b) => `${b.id}:${DENSITY_CODE[b.densityLevel]}`);
-    if (painted.length) parts.push(`g=${painted.join(",")}`);
+    const densities = encodeDensities(state.blocks);
+    if (densities) {
+      // The block count lets the reader detect a grid that no longer lines up.
+      parts.push(`n=${state.blocks.length}`, `g=${densities}`);
+    }
 
     // The fragment never reaches the server and keeps the service worker's
     // cache lookup matching the plain shell URL.
     return `${location.href.split("#")[0]}#${parts.join("&")}`;
   }
 
-  // Returns null unless the hash holds a usable polygon.
+  // Returns null unless the hash holds a usable polygon, in either format.
   function parseShareUrl() {
     if (!location.hash) return null;
     const params = new URLSearchParams(location.hash.slice(1));
     const rawPoints = params.get("p");
     if (!rawPoints) return null;
 
-    const polygon = rawPoints
-      .split(";")
-      .map((pair) => {
-        const [lat, lng] = pair.split("_");
-        return { lat: Number(lat), lng: Number(lng) };
-      })
-      .filter((p) => Number.isFinite(p.lat) && Number.isFinite(p.lng));
-    if (polygon.length < 3) return null;
-
-    return {
-      polygon,
+    const shared = {
       polygonClosed: params.get("c") === "1",
       densities: params.get("g") || "",
     };
+
+    const polygon = decodePolygon(rawPoints);
+    if (polygon && polygon.length >= 3) {
+      return Object.assign(shared, {
+        polygon,
+        blockCount: Number(params.get("n")) || 0,
+        legacy: false,
+      });
+    }
+
+    // The two formats cannot be confused: this one needs decimal points in the
+    // coordinates, and the compact one rejects them.
+    const legacy = decodeLegacyPolygon(rawPoints);
+    if (!legacy || legacy.length < 3) return null;
+    return Object.assign(shared, { polygon: legacy, legacy: true });
   }
 
   function applySharedState(shared) {
@@ -556,13 +666,21 @@
     state.blocks = [];
     generateGrid();
 
-    const blocksById = new Map(state.blocks.map((b) => [b.id, b]));
-    for (const entry of shared.densities.split(",")) {
-      const [id, code] = entry.split(":");
-      const level = LEVEL_BY_CODE[code];
-      const block = level ? blocksById.get(id) : null;
-      if (block) block.densityLevel = level;
+    if (!shared.densities) return;
+    if (shared.legacy) {
+      // Legacy densities name their blocks, so a changed grid size cannot shift
+      // them onto the wrong one.
+      applyLegacyDensities(shared.densities, state.blocks);
+      return;
     }
+    // The runs are positional, so a grid that regenerated to a different size
+    // would put every density on the wrong block. Show nothing rather than
+    // something wrong.
+    if (shared.blockCount !== state.blocks.length) {
+      console.warn("Shared densities do not match this grid; skipping them");
+      return;
+    }
+    decodeDensities(shared.densities, state.blocks);
   }
 
   // Centres and zooms so the polygon fills the map area with a small margin.
