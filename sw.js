@@ -1,7 +1,7 @@
 // Minimal service worker: makes the app installable and caches the static
 // shell so it still loads (map tiles need network) after being added to the
 // home screen. No offline map support is implied.
-const CACHE_NAME = "crowd-estimator-shell-v5";
+const CACHE_NAME = "crowd-estimator-shell-v6";
 const SHELL_FILES = [
   "./",
   "./index.html",

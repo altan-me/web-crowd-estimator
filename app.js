@@ -171,6 +171,7 @@
   const zoomOutBtn = document.getElementById("zoom-out");
   const reloadMapBtn = document.getElementById("reload-map");
   const reloadMapIconEl = reloadMapBtn.querySelector(".control-icon");
+  const lockMapBtn = document.getElementById("lock-map");
 
   const modeButtons = Array.from(document.querySelectorAll(".mode-btn"));
   const densityButtons = Array.from(document.querySelectorAll(".density-btn"));
@@ -202,7 +203,7 @@
   // ---------------------------------------------------------------------
   // Application state
   // ---------------------------------------------------------------------
-  /** @type {{view:{lat:number,lng:number,zoom:number}, polygon:{lat:number,lng:number}[], polygonClosed:boolean, blocks:{id:string,lat:number,lng:number,densityLevel:string}[], totalAreaM2:number, gridMeta:null|{refLat:number,refLng:number,minX:number,minY:number}}} */
+  /** @type {{view:{lat:number,lng:number,zoom:number}, polygon:{lat:number,lng:number}[], polygonClosed:boolean, blocks:{id:string,lat:number,lng:number,densityLevel:string}[], totalAreaM2:number, gridMeta:null|{refLat:number,refLng:number,minX:number,minY:number}, locked:boolean}} */
   let state = {
     view: { lat: 40.4406, lng: -79.9959, zoom: 17 },
     polygon: [],
@@ -210,6 +211,7 @@
     blocks: [],
     totalAreaM2: 0,
     gridMeta: null,
+    locked: false,
   };
 
   let mode = "pan"; // 'pan' | 'draw' | 'paint'
@@ -774,6 +776,10 @@
   );
 
   function updateHint() {
+    if (state.locked) {
+      hintEl.textContent = "Map locked. Unlock to make changes.";
+      return;
+    }
     const touch = touchPrimaryQuery.matches;
     const press = touch ? "Tap" : "Click";
     if (mode === "pan")
@@ -851,21 +857,51 @@
   }
 
   function updateWorkflow() {
+    const mapLocked = state.locked;
     const { step, message } = currentStep();
-    stepLabelEl.textContent = `Step ${step} of 3`;
-    stepTextEl.textContent = message;
+    // Explain the dead controls rather than leaving the step prompt lying.
+    if (mapLocked) {
+      stepLabelEl.textContent = "Locked";
+      stepTextEl.textContent =
+        "Nothing changes while the map is locked. Its lock button sits on the map, top right.";
+    } else {
+      stepLabelEl.textContent = `Step ${step} of 3`;
+      stepTextEl.textContent = message;
+    }
     // The polygon controls only make sense while drawing.
     drawControlsEl.hidden = mode !== "draw";
-    undoPointBtn.disabled = state.polygon.length === 0;
-    finishPolygonBtn.disabled = state.polygon.length < 3;
+    undoPointBtn.disabled = mapLocked || state.polygon.length === 0;
+    finishPolygonBtn.disabled = mapLocked || state.polygon.length < 3;
     shareBtn.disabled = state.polygon.length < 3;
-    const locked = state.blocks.length === 0;
-    densityGroupEl.classList.toggle("locked", locked);
-    densityLockedEl.hidden = !locked;
+
+    // Locking freezes everything that could alter the map, but leaves the
+    // read-only controls (share, report an issue, reload) usable.
+    modeButtons.forEach((btn) => (btn.disabled = mapLocked));
+    densityButtons.forEach((btn) => (btn.disabled = mapLocked));
+    clearAllBtn.disabled = mapLocked;
+    zoomInBtn.disabled = mapLocked;
+    zoomOutBtn.disabled = mapLocked;
+    searchToggleBtn.disabled = mapLocked;
+
+    const noGrid = state.blocks.length === 0;
+    densityGroupEl.classList.toggle("locked", noGrid);
+    densityLockedEl.hidden = !noGrid;
     // The mobile density palette only shows once there is a grid to paint.
-    const showDensityBar = !locked && mode === "paint";
+    const showDensityBar = !noGrid && !mapLocked && mode === "paint";
     densityBarEl.hidden = !showDensityBar;
     document.body.classList.toggle("has-density-bar", showDensityBar);
+  }
+
+  // Locking freezes the map so a finished estimate cannot be edited by accident.
+  function setLocked(locked) {
+    state.locked = locked;
+    document.body.classList.toggle("map-locked", locked);
+    lockMapBtn.setAttribute("aria-pressed", String(locked));
+    // An open search field would be left stranded by the disabled toggle.
+    if (locked) setSearchOpen(false);
+    updateHint();
+    updateWorkflow();
+    saveState();
   }
 
   function setMode(newMode) {
@@ -911,6 +947,8 @@
     saveState();
   });
 
+  lockMapBtn.addEventListener("click", () => setLocked(!state.locked));
+
   reloadMapBtn.addEventListener("click", () => {
     reloadMap();
     // A quick spin confirms the tap landed, since the redraw is near-instant.
@@ -936,6 +974,7 @@
   canvas.addEventListener(
     "wheel",
     (e) => {
+      if (state.locked) return; // let the page scroll instead of zooming
       e.preventDefault();
       const rect = canvas.getBoundingClientRect();
       const px = e.clientX - rect.left;
@@ -1057,6 +1096,7 @@
   }
 
   canvas.addEventListener("pointerdown", (e) => {
+    if (state.locked) return;
     try {
       canvas.setPointerCapture(e.pointerId);
     } catch (err) {
@@ -1199,6 +1239,7 @@
       state.view.zoom = guess.zoom;
     }
     setMode(state.polygon.length && !state.polygonClosed ? "draw" : mode);
+    setLocked(state.locked);
     setDensity(currentDensity);
     updateVertexCount();
     recalcTotals();

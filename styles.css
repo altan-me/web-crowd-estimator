@@ -263,6 +263,25 @@ button.danger:disabled:hover {
   flex-shrink: 0;
 }
 
+/* Lock toggle: shows the current state and fills in while the map is locked. */
+.lock-icon-locked {
+  display: none;
+}
+
+body.map-locked .lock-icon-open {
+  display: none;
+}
+
+body.map-locked .lock-icon-locked {
+  display: block;
+}
+
+.icon-btn[aria-pressed="true"] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
 .hint {
   position: absolute;
   left: 12px;
