@@ -4,6 +4,15 @@ A small map tool for estimating crowd sizes from satellite imagery, using
 Herbert Jacobs' crowd density method. Draw the area, say how tightly packed
 people are in each part of it, and it adds up the people.
 
+## Live site
+
+Try it at [crowd.altan.me](https://crowd.altan.me/).
+
+<p align="center">
+  <img src="screenshots/overview.png" alt="Crowd Estimator map overview" width="49%" />
+  <img src="screenshots/estimate.png" alt="A crowd estimate with a painted density grid" width="49%" />
+</p>
+
 It's a static site: plain HTML, CSS and JavaScript. No build step, and no
 dependencies at runtime. The whole app is the handful of files in this folder.
 
